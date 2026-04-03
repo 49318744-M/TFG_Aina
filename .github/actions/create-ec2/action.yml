@@ -1,0 +1,31 @@
+name: 'Create EC2'
+description: 'Crea instancia EC2 con Terraform'
+inputs:
+  instance_name:
+    required: true
+  key_name:
+    required: true
+  ec2_role:
+    required: true
+  aws_region:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init and Apply
+      shell: bash
+      run: |
+        terraform init
+        terraform apply -auto-approve
+        
+    - name: Export Instance Info
+      shell: bash
+      run: |
+        INSTANCE_ID=$(terraform output -raw instance_id)
+        VM_NAME=$(terraform output -raw public_dns)
+        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+        echo "VM_NAME=$VM_NAME" >> $GITHUB_ENV
