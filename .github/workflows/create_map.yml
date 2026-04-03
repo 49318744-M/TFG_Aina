@@ -1,0 +1,86 @@
+name: build_and_push_models-2
+
+on:
+  workflow_dispatch:
+
+env:
+  MONAI_APP_PATH: "${{ github.event.repository.name }}/ai_spleen_seg_app/"
+  MONAI_APP_CONFIG: "${{ github.event.repository.name }}/ai_spleen_seg_app/app.yaml"
+  MONAI_MODEL_PATH: "${{ github.event.repository.name }}/ai_spleen_seg_app/model/model.ts"
+  EC2_ROLE_NAME: "ec2-role"
+  REPOSITORY: "monai"
+  TAG: "latest"
+
+jobs:
+  setup_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup AWS CLI
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region ${{ secrets.AWS_REGION }} 
+      - name: Create-EC2 Action Call
+        id: create-ec2
+        uses: ./.github/actions/create-ec2
+        with:
+          instance_name: "monai-build"
+          key_name: "monai-build-key"
+          ec2_role: ${{ env.EC2_ROLE_NAME }}
+          aws_region: ${{ secrets.AWS_REGION }}
+
+      - name: Create-EC2 Action Output ID, VM name
+        run: |
+          echo "Instance ID: $INSTANCE_ID"
+          echo "VM Name: $VM_NAME"
+
+      - name: Cloning repository
+        env:
+          REPO_URL: ${{ github.repository }}
+        run: |
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "git clone --branch main --depth 1 https://github.com/${REPO_URL}.git" 
+
+      - name: Package MONAI deploy app
+        run: |
+          ssh -i $SSH_PRIVATE_KEY_PATH $VM_NAME << EOF
+          source monai/bin/activate
+          monai-deploy package ${{ env.MONAI_APP_PATH }} \
+            --config ${{ env.MONAI_APP_CONFIG }} \
+            --tag seg_app:latest \
+            --models ${{ env.MONAI_MODEL_PATH }} \
+            --platform x64-workstation \
+            -l DEBUG
+          EOF 
+
+      - name: Login to AWS ECR
+        run: |
+          ssh -i $SSH_PRIVATE_KEY_PATH $VM_NAME "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com" 
+
+      - name: Check and create ECR repository if not exists
+        run: |
+          ssh -i $SSH_PRIVATE_KEY_PATH $VM_NAME "
+          if ! aws ecr describe-repositories --region ${{ secrets.AWS_REGION }} --repository-names ${{ env.REPOSITORY }} > /dev/null 2>&1; then
+            echo 'Repository ${{ env.REPOSITORY }} does not exist. Creating it...'
+            aws ecr create-repository --repository-name ${{ env.REPOSITORY }} --region ${{ secrets.AWS_REGION }}
+          else
+            echo 'Repository ${{ env.REPOSITORY }} already exists.'
+          fi " 
+
+      - name: Tag Docker Image
+        run: |
+          DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
+          ssh -i $SSH_PRIVATE_KEY_PATH $VM_NAME "docker tag seg_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE"
+          echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_ENV 
+
+      - name: Push Docker Image
+        run: |
+          ssh -i $SSH_PRIVATE_KEY_PATH $VM_NAME "docker push $DOCKER_IMAGE"
+
+      - name: Terminate EC2 Instance
+        run: |
+          aws ec2 terminate-instances --instance-ids $INSTANCE_ID --region ${{ secrets.AWS_REGION }}
+          echo "Waiting for termination to complete..."
+          aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID --region ${{ secrets.AWS_REGION }}
+          echo "Instance $INSTANCE_ID terminated." 
