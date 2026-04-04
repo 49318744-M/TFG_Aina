@@ -53,8 +53,7 @@ jobs:
       - name: Package MONAI deploy app
         run: |
           ssh -i $SSH_PRIVATE_KEY_PATH $VM_NAME << EOF
-          source ~/anaconda3/etc/profile.d/conda.sh
-          conda activate monai
+          source monai/bin/activate
           monai-deploy package ${{ env.MONAI_APP_PATH }} \
             --config ${{ env.MONAI_APP_CONFIG }} \
             --tag seg_app:latest \
