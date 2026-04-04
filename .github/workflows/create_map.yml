@@ -73,7 +73,7 @@ jobs:
           DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
             # El nom de la imatge que genera MONAI per defecte sol ser aquest:
-            docker tag seg_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
+            docker tag seg_app-x86_64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
             docker push $DOCKER_IMAGE
           "
 
