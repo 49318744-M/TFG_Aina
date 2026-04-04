@@ -13,7 +13,7 @@ resource "aws_key_pair" "deployer" {
 }
 
 resource "aws_instance" "monai_instance" {
-  ami           = "ami-0e2c8ccd4e122313a" # Ubuntu 22.04 en us-east-1
+  ami           = "ami-08aa4c8884cdec81f" # Ubuntu 22.04 en us-east-1
   instance_type = "g4dn.xlarge"
   key_name      = aws_key_pair.deployer.key_name
 
