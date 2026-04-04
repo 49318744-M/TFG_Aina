@@ -47,12 +47,10 @@ jobs:
         run: |
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME << 'EOF'
             source /home/ubuntu/monai/bin/activate
-            
-            # Entrem a la carpeta del repositori
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # Executem el package amb les rutes de la teva imatge
-            monai-deploy package ai_spleen_seg_app \
+            # Executem el package apuntant directament al fitxer app.py
+            monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
