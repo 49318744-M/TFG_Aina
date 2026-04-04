@@ -5,12 +5,10 @@ application:
   version: 1.0.0
   description: "App per a la segmentació de melsa basada en MONAI Deploy"
   main: app.py
-  # Secció de recursos DINS d'application
   resources:
     cpu: 1
     gpu: 1
     memory: 4Gi
-  # Secció de models DINS d'application
   models:
     - name: spleen_model
       model: model.ts
