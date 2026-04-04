@@ -25,7 +25,7 @@ resource "aws_instance" "monai_instance" {
   }
 }
 resource "aws_security_group" "monai_sg" {
-  name        = "monai-build-sg"
+  name_prefix       = "monai-build-sg"
   description = "Permetre SSH per al build de MONAI"
 
   ingress {
