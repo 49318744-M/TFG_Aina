@@ -46,26 +46,18 @@ jobs:
       - name: Package MONAI deploy app
         run: |
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME << 'EOF'
-            # 1. Activem l'entorn virtual
             source /home/ubuntu/monai/bin/activate
             
-            # 2. Busquem on s'ha clonat el repositori (dinàmicament)
-            REPO_DIR=$(ls -d */ | grep -v "monai/" | head -n 1)
-            cd "/home/ubuntu/$REPO_DIR"
+            # Entrem a la carpeta del repositori
+            cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # 3. Executem el package des de dins del repositori
-            # Comprovem que el fitxer existeix abans per seguretat
-            if [ -f "ai_spleen_seg_app/app.yaml" ]; then
-              monai-deploy package ai_spleen_seg_app \
-                --config ai_spleen_seg_app/app.yaml \
-                --tag seg_app:latest \
-                --models ai_spleen_seg_app/model/model.ts \
-                --platform x64-workstation \
-                -l DEBUG
-            else
-              echo "ERROR: No s'ha trobat ai_spleen_seg_app/app.yaml a $(pwd)"
-              exit 1
-            fi
+            # Executem el package amb les rutes de la teva imatge
+            monai-deploy package ai_spleen_seg_app \
+              --config ai_spleen_seg_app/model/app.yml \
+              --tag seg_app:latest \
+              --models ai_spleen_seg_app/model/model.ts \
+              --platform x64-workstation \
+              -l DEBUG
           EOF
 
       - name: Login to AWS ECR
