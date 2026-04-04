@@ -1,31 +1,118 @@
-name: 'Create EC2'
-description: 'Crea instancia EC2 con Terraform'
+name: 'Create EC2 Action'
+description: 'Runs a composite step action to manage EC2 and Terraform'
 inputs:
   instance_name:
     required: true
+    description: "Name of the EC2 instance"
   key_name:
     required: true
+    description: "Name of the SSH key pair"
   ec2_role:
     required: true
+    description: "Name of the IAM role to assign to the EC2 instance"
   aws_region:
     required: true
+    description: "AWS Region"
+
+outputs:
+  vm_name:
+    description: "VM Name"
+    value: ${{ steps.get_vm_name.outputs.VM_NAME }}
+  instance_id:
+    description: "The ID of the EC2 instance"
+    value: ${{ steps.get_instance_id.outputs.INSTANCE_ID }}
+  ssh_private_key:
+    description: "Path to the SSH private key file"
+    value: ${{ steps.generate_ssh_key.outputs.SSH_PRIVATE_KEY_PATH }}
 
 runs:
   using: "composite"
   steps:
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-
-    - name: Terraform Init and Apply
+    - name: Check for existing Key Pair and delete if exists
       shell: bash
       run: |
-        terraform init
-        terraform apply -auto-approve
-        
-    - name: Export Instance Info
+        if aws ec2 describe-key-pairs --key-names "${{ inputs.key_name }}" > /dev/null 2>&1; then
+          aws ec2 delete-key-pair --key-name "${{ inputs.key_name }}"
+        fi
+
+    - name: Generate SSH Key
+      id: generate_ssh_key
+      shell: bash
+      run: |
+        ssh-keygen -t rsa -f /tmp/ssh_id_gh -N ""
+        echo "SSH_KEY_PATH=/tmp/ssh_id_gh.pub" >> $GITHUB_ENV
+        echo "SSH_PRIVATE_KEY_PATH=/tmp/ssh_id_gh" >> $GITHUB_ENV
+        echo "SSH_PRIVATE_KEY_PATH=/tmp/ssh_id_gh" >> $GITHUB_OUTPUT
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_wrapper: false
+
+    - name: Initialize a new Terraform working directory
+      shell: bash
+      run: terraform init
+
+    - name: Format Terraform configuration files
+      shell: bash
+      run: terraform fmt
+
+    - name: Terraform Apply
+      shell: bash
+      run: |
+        terraform apply -auto-approve \
+          -var "instance_name=${{ inputs.instance_name }}" \
+          -var "key_name=${{ inputs.key_name }}" \
+          -var "ssh_key_path=${{ env.SSH_KEY_PATH }}" \
+          -var "aws_region=${{ inputs.aws_region }}"
+
+    - name: Get IP address
+      id: get_ip
+      shell: bash
+      run: |
+        IP=$(terraform output -raw instance_public_ip)
+        echo "AWS_IPADDRESS=$IP" >> $GITHUB_ENV
+        echo "VM IP Address: $IP"
+
+    - name: Get VM name
+      id: get_vm_name
+      shell: bash
+      run: |
+        VM_NAME="ubuntu@${{ env.AWS_IPADDRESS }}"
+        echo "VM_NAME=$VM_NAME" >> $GITHUB_ENV
+        echo "VM_NAME=$VM_NAME" >> $GITHUB_OUTPUT
+        echo "Constructed VM Name: $VM_NAME"
+
+    - name: Get Instance ID
+      id: get_instance_id
       shell: bash
       run: |
         INSTANCE_ID=$(terraform output -raw instance_id)
-        VM_NAME=$(terraform output -raw public_dns)
         echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-        echo "VM_NAME=$VM_NAME" >> $GITHUB_ENV
+        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_OUTPUT
+        echo "Instance ID: $INSTANCE_ID"
+
+    - name: Assign IAM Role to EC2 Instance
+      shell: bash
+      run: |
+        aws ec2 associate-iam-instance-profile --instance-id $INSTANCE_ID --iam-instance-profile Name=${{ inputs.ec2_role }}
+
+    - name: Test connection
+      shell: bash
+      run: |
+        echo "Attempting to connect to: ${{ env.VM_NAME }}"
+        for i in {1..10}; do
+          ssh -i ${{ env.SSH_PRIVATE_KEY_PATH }} -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ env.VM_NAME }} "uname -a" && break || sleep 10
+        done
+
+    - name: Set up environment / Download MONAI
+      shell: bash
+      run: |
+        ssh -i ${{ env.SSH_PRIVATE_KEY_PATH }} -o StrictHostKeyChecking=no ${{ env.VM_NAME }} << EOF
+          sudo apt-get update
+          sudo apt-get install -y python3-venv
+          python3 -m venv monai
+          source monai/bin/activate
+          pip install --upgrade pip
+          pip install --upgrade monai-deploy-app-sdk
+        EOF
