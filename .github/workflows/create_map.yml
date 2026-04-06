@@ -49,14 +49,12 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # Exportem la variable per si de cas, però deixem la comanda neta
-            export HOLOSCAN_SDK_VERSION=4.0.0
-            
+            # Canviem --platform x86_64 per x64-workstation
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
-              --platform x86_64 \
+              --platform x64-workstation \
               -l DEBUG
           EOF
 
