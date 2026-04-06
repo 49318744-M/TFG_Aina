@@ -109,18 +109,21 @@ runs:
       shell: bash
       run: |
         ssh -i ${{ env.SSH_PRIVATE_KEY_PATH }} -o StrictHostKeyChecking=no ${{ env.VM_NAME }} << 'EOF'
-          # 1. Matar processos que bloquegen apt i esperar que s'alliberi
+          # 1. Desbloqueig del gestor de paquets
           sudo fuser -ku /var/lib/dpkg/lock-frontend || true
           sudo fuser -ku /var/lib/apt/lists/lock || true
           sudo dpkg --configure -a
 
-          # 2. Instal·lar dependències vitals
+          # 2. Instal·lació de dependències del sistema
           sudo apt-get update
           sudo apt-get install -y python3-venv python3-pip
 
-          # 3. Crear entorn virtual i instal·lar MONAI
+          # 3. Creació de l'entorn virtual
           python3 -m venv /home/ubuntu/monai
           source /home/ubuntu/monai/bin/activate
+          
+          # 4. INSTAL·LACIÓ AMB VERSIONS FIXADES (AQUÍ ESTÀ EL CANVI)
           pip install --upgrade pip
-          pip install monai-deploy-app-sdk
+          # Forcem la 0.6.0 de MONAI i la 4.0.0 de Holoscan per evitar el bug de la 4.1.0
+          pip install monai-deploy-app-sdk==0.6.0 holoscan-cli==4.0.0
         EOF
