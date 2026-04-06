@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 env:
-  # El nom del repo el traiem de github.event per seguretat
   REPO_NAME: ${{ github.event.repository.name }}
   EC2_ROLE_NAME: "ec2-role"
   REPOSITORY: "monai"
