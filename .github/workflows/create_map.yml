@@ -49,12 +49,10 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # 1. Esborrem fitxers temporals que puguin guardar la versió incorrecta
+            # Netegem temporals abans de llançar
             rm -rf .holoscan_cli
             
-            # 2. Executem amb els paràmetres de versió primer de tot
             monai-deploy package ai_spleen_seg_app/app.py \
-              --sdk-version 4.0.0 \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \

@@ -1,8 +1,9 @@
 %YAML 1.1
 ---
 application:
-  title: "Spleen Segmentation App" # Abans era 'name', ara vol 'title'
+  title: "Spleen Segmentation App"
   version: "1.0.0"
+  sdk_version: "4.0.0" 
   description: "App per a la segmentació de melsa basada en MONAI Deploy"
   main: "app.py"
   models:
