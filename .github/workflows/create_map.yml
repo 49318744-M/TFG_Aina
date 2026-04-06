@@ -76,7 +76,7 @@ jobs:
         run: |
           DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
-            # Fem el tag usant el nom exacte que hem vist al log del Packager
+            # Fem el tag de la imatge que genera el packager per defecte
             docker tag seg_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
             docker push $DOCKER_IMAGE
           "
