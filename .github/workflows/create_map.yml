@@ -52,8 +52,15 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
+            # 1. VERIFICACIÓ DE FITXERS (Això sortirà al log)
+            echo "--- ESTRUCTURA DE FITXERS ACTUAL ---"
+            ls -R ai_spleen_seg_app/
+            
+            # 2. EXPORT DE VERSIONS
             export HOLOSCAN_SDK_VERSION=4.0.0
-
+            
+            # 3. EXECUTAR PACKAGE AMB SORTIDA DETALLADA
+            # Si falla, ara veurem l'error de Python real
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
