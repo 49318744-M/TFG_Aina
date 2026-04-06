@@ -49,7 +49,6 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # Executem el package apuntant directament al fitxer app.py
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \

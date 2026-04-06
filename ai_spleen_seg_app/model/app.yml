@@ -1,16 +1,16 @@
 %YAML 1.1
 ---
 application:
-  name: spleen_segmentation_app
-  version: 1.0.0
+  title: "Spleen Segmentation App" # Abans era 'name', ara vol 'title'
+  version: "1.0.0"
   description: "App per a la segmentació de melsa basada en MONAI Deploy"
-  main: app.py
+  main: "app.py"
   models:
-    - name: spleen_model
-      model: model.ts
-      format: torchscript
+    - name: "spleen_model"
+      model: "model.ts"
+      format: "torchscript"
 
 resources:
   cpu: 1
   gpu: 1
-  memory: 4Gi
+  memory: "4Gi"
