@@ -114,15 +114,12 @@ runs:
           sudo dpkg --configure -a
 
           sudo apt-get update
-          sudo apt-get install -y python3-venv python3-pip
+          # Instal·lem git-lfs per poder baixar el model real
+          sudo apt-get install -y python3-venv python3-pip git-lfs
+          git lfs install
 
           python3 -m venv /home/ubuntu/monai
           source /home/ubuntu/monai/bin/activate
-          
-          # 1. Actualitzem pip
           pip install --upgrade pip
-          
-          # 2. Relaxem la instal·lació: 
-          # Fixem el SDK de MONAI (0.6.0) però deixem que ell busqui el cli compatible
           pip install monai-deploy-app-sdk==0.6.0
         EOF
