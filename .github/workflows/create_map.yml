@@ -49,14 +49,15 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # Netegem temporals abans de llançar
             rm -rf .holoscan_cli
             
+            # Afegim --sdk-version 4.0.0 per reforçar el que diu el app.yml
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x86_64 \
+              --sdk-version 4.0.0 \
               -l DEBUG
           EOF
 
