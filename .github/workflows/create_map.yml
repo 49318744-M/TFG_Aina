@@ -52,15 +52,15 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
+            # Forcem la versió de l'SDK per compatibilitat
             export HOLOSCAN_SDK_VERSION=4.0.0
 
-            # Utilitzem --source pypi per indicar que no busqui fitxers locals
+            # Comanda neta: MONAI Deploy 0.6.0 instal·la de PyPI per defecte
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x64-workstation \
-              --source pypi \
               -l DEBUG
           EOF
 
