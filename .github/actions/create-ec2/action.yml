@@ -32,7 +32,7 @@ runs:
       shell: bash
       run: |
         aws ec2 delete-key-pair --key-name "monai-build-key" || true
-        
+
     - name: Check for existing Key Pair and delete if exists
       shell: bash
       run: |
@@ -114,15 +114,17 @@ runs:
       shell: bash
       run: |
         ssh -i ${{ env.SSH_PRIVATE_KEY_PATH }} -o StrictHostKeyChecking=no ${{ env.VM_NAME }} << 'EOF'
+          # MATAR processos d'actualització automàtica que bloquegen el sistema
           sudo fuser -ku /var/lib/dpkg/lock-frontend || true
           sudo fuser -ku /var/lib/apt/lists/lock || true
           sudo dpkg --configure -a
 
+          # INSTAL·LACIÓ forçada dels paquets necessaris
           sudo apt-get update
-          # Instal·lem git-lfs per poder baixar el model real
           sudo apt-get install -y python3-venv python3-pip git-lfs
           git lfs install
 
+          # CREACIÓ de l'entorn virtual
           python3 -m venv /home/ubuntu/monai
           source /home/ubuntu/monai/bin/activate
           pip install --upgrade pip
