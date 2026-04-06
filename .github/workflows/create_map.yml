@@ -54,13 +54,13 @@ jobs:
             
             export HOLOSCAN_SDK_VERSION=4.0.0
 
-            # Afegim --sdk pip per evitar que busqui el fitxer "None"
+            # Utilitzem --source pypi per indicar que no busqui fitxers locals
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x64-workstation \
-              --sdk pip \
+              --source pypi \
               -l DEBUG
           EOF
 
