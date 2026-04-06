@@ -68,12 +68,18 @@ jobs:
 
       - name: Tag and Push Docker Image
         run: |
-          # Construïm la URL de destinació a ECR
+          # Construïm la URL de destinació a ECR (Amazon Container Registry)
           DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
           
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
-            # El SDK 0.6.0 genera la imatge amb aquest format:
-            docker tag spleen_segmentation_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
+            # 1. Llistem les imatges per seguretat al log
+            docker images
+            
+            # 2. Fem el tag amb el nom normalitzat que genera el SDK 0.6.0
+            # IMPORTANT: Hem canviat els guions baixos (_) per guions mitjans (-)
+            docker tag spleen-segmentation-app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
+            
+            # 3. Pugem la imatge al núvol
             docker push $DOCKER_IMAGE
           "
 
