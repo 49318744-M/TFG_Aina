@@ -52,20 +52,15 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # 1. VERIFICACIÓ DE FITXERS (Això sortirà al log)
-            echo "--- ESTRUCTURA DE FITXERS ACTUAL ---"
-            ls -R ai_spleen_seg_app/
-            
-            # 2. EXPORT DE VERSIONS
             export HOLOSCAN_SDK_VERSION=4.0.0
-            
-            # 3. EXECUTAR PACKAGE AMB SORTIDA DETALLADA
-            # Si falla, ara veurem l'error de Python real
+
+            # Afegim --sdk pip per evitar que busqui el fitxer "None"
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x64-workstation \
+              --sdk pip \
               -l DEBUG
           EOF
 
@@ -81,18 +76,8 @@ jobs:
         run: |
           DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
-            echo '--- LLISTAT DIMATGES DISPONIBLES ---'
-            docker images
-            
-            # Busquem qualsevol imatge que no sigui buildkit per ID
-            IMAGE_ID=\$(docker images --format '{{.ID}} {{.Repository}}' | grep -v 'moby/buildkit' | head -n 1 | awk '{print \$1}')
-            
-            if [ -z \"\$IMAGE_ID\" ]; then
-              echo 'ERROR: No s’ha generat cap imatge!'
-              exit 1
-            fi
-
-            docker tag \$IMAGE_ID $DOCKER_IMAGE
+            # Fem el tag usant el nom exacte que hem vist al log del Packager
+            docker tag seg_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
             docker push $DOCKER_IMAGE
           "
 
