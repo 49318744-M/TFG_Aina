@@ -60,7 +60,7 @@ jobs:
 
       - name: Login to AWS ECR
         run: |
-          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com" 
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
 
       - name: Check and create ECR repository
         run: |
@@ -68,10 +68,12 @@ jobs:
 
       - name: Tag and Push Docker Image
         run: |
+          # Construïm la URL de destinació a ECR
           DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
+          
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
-            # El nom de la imatge que genera MONAI per defecte sol ser aquest:
-            docker tag seg_app-x86_64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
+            # El SDK 0.6.0 genera la imatge amb aquest format:
+            docker tag spleen_segmentation_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
             docker push $DOCKER_IMAGE
           "
 
