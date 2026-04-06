@@ -48,7 +48,9 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # Canviem --platform x86_64 per x64-workstation
+            # Exportamos la versión para evitar el bug 4.1.0
+            export HOLOSCAN_SDK_VERSION=4.0.0
+
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
@@ -67,18 +69,18 @@ jobs:
 
       - name: Tag and Push Docker Image
         run: |
-          # Construïm la URL de destinació a ECR (Amazon Container Registry)
           DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
           
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
-            # 1. Llistem les imatges per seguretat al log
+            # Llistem per veure què ha passat si falla
             docker images
             
-            # 2. Fem el tag amb el nom normalitzat que genera el SDK 0.6.0
-            # IMPORTANT: Hem canviat els guions baixos (_) per guions mitjans (-)
-            docker tag spleen-segmentation-app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
+            # El SDK 0.6.0 genera el nom basat en el 'title' de l'app.yml
+            # Spleen Segmentation App -> spleen-segmentation-app
+            # Intentem fer el tag directament pel nom que MONAI genera:
+            docker tag spleen-segmentation-app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE || \
+            docker tag seg_app:latest $DOCKER_IMAGE
             
-            # 3. Pugem la imatge al núvol
             docker push $DOCKER_IMAGE
           "
 
