@@ -49,15 +49,13 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            rm -rf .holoscan_cli
-            
-            # Afegim --sdk-version 4.0.0 per reforçar el que diu el app.yml
+            # Forcem la versió 4.0.0 abans de qualsevol altra cosa
             monai-deploy package ai_spleen_seg_app/app.py \
+              --sdk-version "4.0.0" \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x86_64 \
-              --sdk-version 4.0.0 \
               -l DEBUG
           EOF
 
