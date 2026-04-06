@@ -49,13 +49,13 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # Afegim --sdk-version 4.0.0 per solucionar el conflicte
+            # Forcem la versió 4.0.0 que és la vàlida segons el teu log
             monai-deploy package ai_spleen_seg_app/app.py \
+              --sdk-version 4.0.0 \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x86_64 \
-              --sdk-version 4.0.0 \
               -l DEBUG
           EOF
 
