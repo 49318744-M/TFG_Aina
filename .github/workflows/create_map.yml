@@ -52,15 +52,15 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
-            # Forcem la versió de l'SDK per compatibilitat
             export HOLOSCAN_SDK_VERSION=4.0.0
 
-            # Comanda neta: MONAI Deploy 0.6.0 instal·la de PyPI per defecte
+            # CANVI CRÍTIC: Afegim '--source pypi' per evitar que busqui el fitxer 'None'
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x64-workstation \
+              --source pypi \
               -l DEBUG
           EOF
 
@@ -76,7 +76,7 @@ jobs:
         run: |
           DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
-            # Fem el tag de la imatge que genera el packager per defecte
+            # Fem el tag del nom EXACTE que ha generat el packager al log
             docker tag seg_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
             docker push $DOCKER_IMAGE
           "
