@@ -52,15 +52,15 @@ jobs:
             source /home/ubuntu/monai/bin/activate
             cd /home/ubuntu/${{ env.REPO_NAME }}
             
+            # Forcem la versió de l'SDK per evitar el bug de la 4.1.0
             export HOLOSCAN_SDK_VERSION=4.0.0
 
-            # CANVI CRÍTIC: Afegim '--source pypi' per evitar que busqui el fitxer 'None'
+            # Comanda neta sense flags de font (usarà PyPI per defecte)
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x64-workstation \
-              --source pypi \
               -l DEBUG
           EOF
 
