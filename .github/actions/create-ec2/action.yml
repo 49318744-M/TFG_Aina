@@ -31,6 +31,11 @@ runs:
     - name: Check for existing Key Pair and delete if exists
       shell: bash
       run: |
+        aws ec2 delete-key-pair --key-name "monai-build-key" || true
+        
+    - name: Check for existing Key Pair and delete if exists
+      shell: bash
+      run: |
         if aws ec2 describe-key-pairs --key-names "${{ inputs.key_name }}" > /dev/null 2>&1; then
           aws ec2 delete-key-pair --key-name "${{ inputs.key_name }}"
         fi
