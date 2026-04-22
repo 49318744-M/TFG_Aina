@@ -5,7 +5,7 @@ from monai.deploy.core import Application, resource
 class SpleenSegApp(Application):
     def compose(self):
         # El nombre 'spleen_model' debe coincidir con el del app.yml
-        seg_operator = MonaiSegInferenceOperator(model_path="model/model.ts")
+        seg_operator = MonaiSegInferenceOperator(model_path="model.ts")
         self.add_operator(seg_operator)
 
 if __name__ == "__main__":
