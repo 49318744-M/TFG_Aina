@@ -5,6 +5,9 @@ on:
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
+  MONAI_APP_PATH: "${{ github.event.repository.name }}/ai_spleen_seg_app/"
+  MONAI_APP_CONFIG: "${{ github.event.repository.name }}/ai_spleen_seg_app/model/app.yml"
+  MONAI_MODEL_PATH: "${{ github.event.repository.name }}/ai_spleen_seg_app/model/model.ts"
   EC2_ROLE_NAME: "ec2-role"
   REPOSITORY: "monai"
   TAG: "latest"
@@ -19,7 +22,7 @@ jobs:
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set default.region ${{ secrets.AWS_REGION }} 
+          aws configure set default.region ${{ secrets.AWS_REGION }}
 
       - name: Create-EC2 Action Call
         id: create-ec2
@@ -30,31 +33,20 @@ jobs:
           ec2_role: ${{ env.EC2_ROLE_NAME }}
           aws_region: ${{ secrets.AWS_REGION }}
 
-      - name: Setup SSH Key
+      - name: Create-EC2 Action Output ID, VM name
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-          echo "SSH_PRIVATE_KEY_PATH=$(pwd)/private_key.pem" >> $GITHUB_ENV
+          echo "Instance ID: $INSTANCE_ID"
+          echo "VM Name: $VM_NAME"
 
-      - name: Cloning repository on EC2
+      - name: Cloning repository
         run: |
-          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
-            rm -rf ${{ env.REPO_NAME }}
-            git clone --branch main --depth 1 https://github.com/${{ github.repository }}.git
-            cd ${{ env.REPO_NAME }}
-            # Ara que git-lfs està instal·lat, baixem el model.ts real
-            git lfs pull
-          "
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "git clone --branch main --depth 1 https://github.com/${{ github.repository }}.git"
 
       - name: Package MONAI deploy app
         run: |
-          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME << 'EOF'
-            source /home/ubuntu/monai/bin/activate
-            cd /home/ubuntu/${{ env.REPO_NAME }}
-            
-            export HOLOSCAN_SDK_VERSION=4.0.0
-
-            
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME << EOF
+            source monai/bin/activate
+            cd ${{ env.REPO_NAME }}
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
@@ -67,20 +59,29 @@ jobs:
         run: |
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
 
-      - name: Check and create ECR repository
+      - name: Check and create ECR repository if not exists
         run: |
-          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "aws ecr describe-repositories --repository-names ${{ env.REPOSITORY }} || aws ecr create-repository --repository-name ${{ env.REPOSITORY }}" 
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
+          if ! aws ecr describe-repositories --region ${{ secrets.AWS_REGION }} --repository-names ${{ env.REPOSITORY }} > /dev/null 2>&1; then
+            echo 'Repository ${{ env.REPOSITORY }} does not exist. Creating it...'
+            aws ecr create-repository --repository-name ${{ env.REPOSITORY }} --region ${{ secrets.AWS_REGION }}
+          else
+            echo 'Repository ${{ env.REPOSITORY }} already exists.'
+          fi
+          "
 
-      - name: Tag and Push Docker Image
+      - name: Tag Docker Image
         run: |
           DOCKER_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}:${{ env.TAG }}"
-          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "
-            # Fem el tag del nom EXACTE que ha generat el packager al log
-            docker tag seg_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE
-            docker push $DOCKER_IMAGE
-          "
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "docker tag seg_app-x64-workstation-dgpu-linux-amd64:latest $DOCKER_IMAGE"
+          echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_ENV
+
+      - name: Push Docker Image
+        run: |
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "docker push $DOCKER_IMAGE"
 
       - name: Terminate EC2 Instance
         if: always()
         run: |
           aws ec2 terminate-instances --instance-ids $INSTANCE_ID --region ${{ secrets.AWS_REGION }}
+          aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID --region ${{ secrets.AWS_REGION }}

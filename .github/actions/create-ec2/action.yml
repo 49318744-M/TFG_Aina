@@ -13,7 +13,6 @@ inputs:
   aws_region:
     required: true
     description: "AWS Region"
-
 outputs:
   vm_name:
     description: "VM Name"
@@ -31,12 +30,7 @@ runs:
     - name: Check for existing Key Pair and delete if exists
       shell: bash
       run: |
-        aws ec2 delete-key-pair --key-name "monai-build-key" || true
-
-    - name: Check for existing Key Pair and delete if exists
-      shell: bash
-      run: |
-        if aws ec2 describe-key-pairs --key-names "${{ inputs.key_name }}" > /dev/null 2>&1; then
+        if aws ec2 describe-key-pairs --key-names "${{ inputs.key_name }}" ; then
           aws ec2 delete-key-pair --key-name "${{ inputs.key_name }}"
         fi
 
@@ -61,6 +55,10 @@ runs:
     - name: Format Terraform configuration files
       shell: bash
       run: terraform fmt
+
+    - name: Check Terraform configuration files format
+      shell: bash
+      run: terraform fmt -check
 
     - name: Terraform Apply
       shell: bash
@@ -114,26 +112,10 @@ runs:
       shell: bash
       run: |
         ssh -i ${{ env.SSH_PRIVATE_KEY_PATH }} -o StrictHostKeyChecking=no ${{ env.VM_NAME }} << 'EOF'
-          # 1. ELIMINAR bloquejos de l'administrador de paquets (soluciona errors de 'apt')
-          sudo fuser -ku /var/lib/dpkg/lock-frontend || true
-          sudo fuser -ku /var/lib/apt/lists/lock || true
-          sudo dpkg --configure -a
-
-          # 2. INSTAL·LACIÓ neta de dependències base
           sudo apt-get update
-          sudo apt-get install -y python3-pip python3-venv git-lfs docker.io
-          
-          # 3. CONFIGURACIÓ de Docker i Git LFS
-          sudo usermod -aG docker ubuntu
-          git lfs install
-
-          # 4. CREACIÓ de l'entorn virtual corregit
-          # Eliminem el directori si existia de proves fallides anteriors
-          rm -rf /home/ubuntu/monai
-          python3 -m venv /home/ubuntu/monai
-          
-          # 5. INSTAL·LACIÓ de l'SDK dins de l'entorn
-          source /home/ubuntu/monai/bin/activate
+          sudo apt-get install -y python3-venv
+          python3 -m venv monai
+          source monai/bin/activate
           pip install --upgrade pip
-          pip install monai-deploy-app-sdk==0.6.0 holoscan==0.6.0
+          pip install monai-deploy-app-sdk
         EOF
