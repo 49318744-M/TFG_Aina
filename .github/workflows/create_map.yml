@@ -51,7 +51,7 @@ jobs:
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
-              --platform x64-workstation \
+              --platform linux/amd64 \
               -l DEBUG
           EOF
 
