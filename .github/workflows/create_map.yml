@@ -46,7 +46,7 @@ jobs:
         run: |
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME \
             "source monai/bin/activate && monai-deploy package --help"
-            
+
       - name: Package MONAI deploy app
         run: |
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME << EOF
@@ -56,7 +56,7 @@ jobs:
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
-              --platform linux/amd64 \
+              --platform x86_64 \
               -l DEBUG
           EOF
 
