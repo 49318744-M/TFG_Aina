@@ -117,5 +117,5 @@ runs:
           python3 -m venv monai
           source monai/bin/activate
           pip install --upgrade pip
-          pip install "holoscan==4.0.0" "monai-deploy-app-sdk==2.0.0"
+          pip install "holoscan-cu12==4.0.0" "monai-deploy-app-sdk"
         EOF
