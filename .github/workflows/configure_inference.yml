@@ -33,8 +33,9 @@ jobs:
               
       - name: Create-EC2 Action Output ID, VM name 
         run: | 
-          echo "Instance ID: $INSTANCE_ID" 
-          echo "VM Name: $VM_NAME" 
+          # Assignem les sortides de l'acció create-ec2 a variables d'entorn de GitHub
+          echo "INSTANCE_ID=${{ steps.create-ec2.outputs.instance_id }}" >> $GITHUB_ENV
+          echo "VM_NAME=${{ steps.create-ec2.outputs.vm_name }}" >> $GITHUB_ENV
 
       - name: Login to AWS ECR 
         run: | 
@@ -66,7 +67,8 @@ jobs:
         run: | 
           cd setup 
           sed -i 's|region = ""|region = "${{ secrets.AWS_REGION }}"|' lambda_function.py 
-          sed -i 's|static_instance_id = ""|static_instance_id = "$INSTANCE_ID"|' lambda_function.py 
+          # Ara la variable $INSTANCE_ID ja és accessible
+          sed -i "s|static_instance_id = \"\"|static_instance_id = \"$INSTANCE_ID\"|" lambda_function.py
       
       - name: Send ec2.sh to EC2 instance 
         run: | 
