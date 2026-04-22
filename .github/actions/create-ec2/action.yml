@@ -114,14 +114,22 @@ runs:
       shell: bash
       run: |
         ssh -i ${{ env.SSH_PRIVATE_KEY_PATH }} -o StrictHostKeyChecking=no ${{ env.VM_NAME }} << 'EOF'
+          # 1. MATAR processos d'actualització automàtica que bloquegen el sistema
+          sudo fuser -ku /var/lib/dpkg/lock-frontend || true
+          sudo fuser -ku /var/lib/apt/lists/lock || true
+          sudo dpkg --configure -a
+
+          # 2. INSTAL·LACIÓ neta de dependències
           sudo apt-get update
-          sudo apt-get install -y python3-venv python3-pip git-lfs docker.io
+          sudo apt-get install -y python3-pip python3-venv git-lfs docker.io
+          
+          # 3. CONFIGURACIÓ de Docker (sense conflictes)
           sudo usermod -aG docker ubuntu
           git lfs install
 
+          # 4. CREACIÓ de l'entorn virtual corregit
           python3 -m venv /home/ubuntu/monai
           source /home/ubuntu/monai/bin/activate
           pip install --upgrade pip
-          # Instal·lem l'SDK i les dependències mínimes per empaquetar
           pip install monai-deploy-app-sdk==0.6.0 holoscan==0.6.0
         EOF
