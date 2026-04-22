@@ -49,14 +49,15 @@ jobs:
 
       - name: Package MONAI deploy app
         run: |
-          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME << EOF
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME << 'EOF'
             source monai/bin/activate
-            cd ${{ env.REPO_NAME }}
+            cd TFG_Aina
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x86_64 \
+              --sdk-version 4.0.0 \
               -l DEBUG
           EOF
 
