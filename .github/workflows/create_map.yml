@@ -54,8 +54,7 @@ jobs:
             
             export HOLOSCAN_SDK_VERSION=4.0.0
 
-            # Eliminem '--source pypi' que causava l'error de ruta
-            # Afegim '.' com a directori de l'aplicació (source context)
+            
             monai-deploy package ai_spleen_seg_app/app.py \
               --config ai_spleen_seg_app/model/app.yml \
               --tag seg_app:latest \
