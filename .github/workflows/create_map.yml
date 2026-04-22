@@ -41,7 +41,12 @@ jobs:
       - name: Cloning repository
         run: |
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME "git clone --branch main --depth 1 https://github.com/${{ github.repository }}.git"
-
+      
+      - name: Check MONAI platform options
+        run: |
+          ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME \
+            "source monai/bin/activate && monai-deploy package --help"
+            
       - name: Package MONAI deploy app
         run: |
           ssh -i $SSH_PRIVATE_KEY_PATH -o StrictHostKeyChecking=no $VM_NAME << EOF
