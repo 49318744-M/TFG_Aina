@@ -17,6 +17,11 @@ aws lambda create-function --function-name $FUNCTION_NAME \
 aws lambda update-function-code --function-name $FUNCTION_NAME \
   --zip-file fileb://function.zip --region $REGION
 
+# Esperar que la Lambda estigui activa
+echo "Esperant que la Lambda estigui activa..."
+aws lambda wait function-active --function-name $FUNCTION_NAME --region $REGION
+
+
 # 3. Dar permisos a S3 para invocar la Lambda
 aws lambda add-permission --function-name $FUNCTION_NAME \
   --statement-id S3Invoke --action lambda:InvokeFunction \
