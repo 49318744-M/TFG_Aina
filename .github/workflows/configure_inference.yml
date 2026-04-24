@@ -21,6 +21,14 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ${{ secrets.AWS_REGION }}
 
+      - name: Cleanup previous resources
+        run: |
+          aws lambda delete-function --function-name ${{ env.FUNCTION_NAME }} --region ${{ secrets.AWS_REGION }} 2>/dev/null || true
+          aws ec2 delete-key-pair --key-name "monai-run-key" --region ${{ secrets.AWS_REGION }} 2>/dev/null || true
+          for sg in $(aws ec2 describe-security-groups --region ${{ secrets.AWS_REGION }} --filters "Name=group-name,Values=monai-build-sg*" --query 'SecurityGroups[*].GroupId' --output text); do
+            aws ec2 delete-security-group --group-id $sg --region ${{ secrets.AWS_REGION }} 2>/dev/null || true
+          done
+
       - name: Create-EC2 Action Call
         id: create-ec2
         uses: ./.github/actions/create-ec2
