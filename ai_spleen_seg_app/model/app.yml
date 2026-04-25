@@ -3,7 +3,7 @@
 application:
   title: "Spleen Segmentation App"
   version: "1.0.0"
-  sdk_version: "0.6.0" 
+  sdk_version: "0.6.0"
   description: "App per a la segmentació de melsa basada en MONAI Deploy"
   main: "app.py"
   models:
@@ -15,3 +15,7 @@ resources:
   cpu: 1
   gpu: 1
   memory: "4Gi"
+
+pip_packages:
+  - "pydicom>=2.3.0"
+  - "monai[nibabel]>=1.0.0"
