@@ -15,7 +15,3 @@ resources:
   cpu: 1
   gpu: 1
   memory: "4Gi"
-
-requires:
-  - pydicom>=2.3.0
-  - highdicom>=0.18.0
