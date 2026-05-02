@@ -57,7 +57,6 @@ jobs:
               --tag seg_app:latest \
               --models ai_spleen_seg_app/model/model.ts \
               --platform x86_64 \
-              --add ai_spleen_seg_app/requirements.txt \
               -l DEBUG
           EOF
 
