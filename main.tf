@@ -21,7 +21,8 @@ resource "aws_instance" "monai_instance" {
   tags = { Name = var.instance_name }
 
   root_block_device {
-    volume_size = 40
+    volume_size = 80
+     delete_on_termination = true
   }
 }
 resource "aws_security_group" "monai_sg" {
