@@ -18,5 +18,4 @@ resources:
 
 requires:
   - pydicom>=2.3.0
-  - monai[nibabel]>=1.0.0
   - highdicom>=0.18.0
